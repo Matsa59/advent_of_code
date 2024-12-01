@@ -1,0 +1,8 @@
+[workspace]
+members = [
+    "day01",
+    # "day02",
+    # Ajoute les jours suivants ici
+]
+
+resolver = "2"
