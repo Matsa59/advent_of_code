@@ -1,46 +1,71 @@
 use std::fs::File;
 use std::io::{self, BufRead};
-use std::cmp::Ordering;
 
 fn main() {
     println!("Part one: {}", part_one());
+    println!("Part two: {}", part_two());
 }
 
 fn part_one() -> usize {
     get_input_lines()
         .into_iter()
-        .filter(|level| valid_level(level))
+        .filter(|level| valid_levels(level.clone(), false))
         .count()
 }
 
-fn valid_level(level: &Vec<u32>) -> bool {
-    let mut level = level.iter();
-    let first = *level.next().unwrap();
-
-    level.scan((first, None), |(previous, direction), value| {
-        let (valid, new_direction) = valid_diff(*previous, *value, *direction);
-
-        if !valid {
-            return Some(false);
-        } else {
-            *previous = *value;
-            *direction = new_direction;
-            Some(true)
-        }
-    }).all(|valid| valid)
+fn part_two() -> usize {
+    get_input_lines()
+        .into_iter()
+        .filter(|level| valid_levels(level.clone(), true))
+        .count()
 }
 
-fn valid_diff(num1: u32, num2: u32, direction: Option<Ordering>) -> (bool, Option<Ordering>) {
-    if num1.abs_diff(num2) > 3 {
-        return (false, None);
+fn valid_levels(levels: Vec<u32>, tolerance: bool) -> bool {
+    if tolerance {
+        let mut index = 0;
+        while index < levels.len() {
+            if do_valid_levels(levels.clone(), Some(index)) {
+                return true;
+            }
+            index += 1;
+        }
+    } else {
+        if do_valid_levels(levels.clone(), None) {
+            return true;
+        }
     }
 
-    if let Some(direction) = direction {
-        (num1.cmp(&num2) == direction, Some(direction))
-    } else {
-        let direction = num1.cmp(&num2);
-        (true, Some(direction))
+    false
+}
+
+fn do_valid_levels(mut levels: Vec<u32>, exclude: Option<usize>) -> bool {
+    if let Some(index) = exclude {
+        levels.remove(index);
     }
+
+    if levels.len() < 3 {
+        return true;
+    }
+
+    let ordering = levels[0].cmp(&levels[1]);
+    let mut index = 1;
+
+    while index < levels.len() {
+        let val_a = levels[index - 1];
+        let val_b = levels[index];
+
+        if val_a.cmp(&val_b) != ordering {
+            return false;
+        }
+
+        if val_a.abs_diff(val_b) > 3 {
+            return false;
+        }
+
+        index += 1;
+    }
+
+    true
 }
 
 fn get_input_lines() -> Vec<Vec<u32>> {
@@ -54,4 +79,33 @@ fn get_input_lines() -> Vec<Vec<u32>> {
                 .collect()
         })
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn safe() {
+        let data = vec![7, 6, 4, 2, 1];
+        assert!(valid_levels(data, true));
+
+        let data = vec![1, 3, 2, 4, 5];
+        assert!(valid_levels(data, true));
+
+        let data = vec![8, 6, 4, 4, 1];
+        assert!(valid_levels(data, true));
+
+        let data = vec![1, 3, 6, 7, 9];
+        assert!(valid_levels(data, true));
+    }
+
+    #[test]
+    fn unsafes() {
+        let data = vec![1, 2, 7, 8, 9];
+        assert!(!valid_levels(data, true));
+
+        let data = vec![9, 7, 6, 2, 1];
+        assert!(!valid_levels(data, true));
+    }
 }
