@@ -146,7 +146,7 @@ SAXAMASAAA
 MAMMMXMMMM
 MXMXAXMASX";
 
-        // assert_eq!(crate::get_result_part_one(input), 18);
+        assert_eq!(crate::get_result_part_one(input), 18);
         assert_eq!(crate::get_result_part_two(input), 9);
     }
 }
